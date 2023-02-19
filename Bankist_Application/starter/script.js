@@ -4,37 +4,54 @@
 /////////////////////////////////////////////////
 // BANKIST APP
 
+/////////////////////////////////////////////////
 // Data
+
+// DIFFERENT DATA! Contains movement dates, currency and locale
+
 const account1 = {
-  owner: 'Jonas Schmedtmann',
-  movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
+  owner: 'Arpit Mishra',
+  movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300],
   interestRate: 1.2, // %
   pin: 1111,
+
+  movementsDates: [
+    '2021-11-18T21:31:17.178Z',
+    '2021-12-23T07:42:02.383Z',
+    '2021-01-28T09:15:04.904Z',
+    '2021-04-01T10:17:24.185Z',
+    '2021-05-08T14:11:59.604Z',
+    '2021-05-27T17:01:17.194Z',
+    '2021-07-11T23:36:17.929Z',
+    '2021-07-12T10:51:36.790Z',
+  ],
+  currency: 'EUR',
+  locale: 'pt-PT', // de-DE
 };
 
 const account2 = {
-  owner: 'Jessica Davis',
+  owner: 'Rajesh Sharma',
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
   interestRate: 1.5,
   pin: 2222,
+
+  movementsDates: [
+    '2020-11-01T13:15:33.035Z',
+    '2020-11-30T09:48:16.867Z',
+    '2020-12-25T06:04:23.907Z',
+    '2020-01-25T14:18:46.235Z',
+    '2020-02-05T16:33:06.386Z',
+    '2020-04-10T14:43:26.374Z',
+    '2020-06-25T18:49:59.371Z',
+    '2020-07-26T12:01:20.894Z',
+  ],
+  currency: 'USD',
+  locale: 'en-US',
 };
 
-const account3 = {
-  owner: 'Steven Thomas Williams',
-  movements: [200, -200, 340, -300, -20, 50, 400, -460],
-  interestRate: 0.7,
-  pin: 3333,
-};
+const accounts = [account1, account2];
 
-const account4 = {
-  owner: 'Sarah Smith',
-  movements: [430, 1000, 700, 50, 90],
-  interestRate: 1,
-  pin: 4444,
-};
-
-const accounts = [account1, account2, account3, account4];
-
+/////////////////////////////////////////////////
 // Elements
 const labelWelcome = document.querySelector('.welcome');
 const labelDate = document.querySelector('.date');
@@ -61,197 +78,197 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-// Display Movements
+// Creating Current Date
+const currentDate = new Date();
+labelDate.textContent = `${currentDate.getDate()}/${
+  currentDate.getMonth() + 1
+}/${currentDate.getFullYear()},${currentDate.getHours()}:${currentDate.getMinutes()}`;
+console.log(currentDate);
 
-const displayMovements = (movements, sort = false) => {
-  containerMovements.innerHTML = ``;
+/////////////////////////////////////////////////
+// Functions
 
-  const movs = sort
-    ? movements.slice().sort((num1, num2) => num1 - num2)
-    : movements;
+const displayMovements = function (acc, sort = false) {
+  containerMovements.innerHTML = '';
+  console.log();
+  const newMovements = acc.movements.slice();
+  const movs = sort ? newMovements.sort((a, b) => a - b) : acc.movements;
 
-  movs.forEach((mov, i) => {
-    const type = mov > 0 ? `deposit` : `withdrawal`;
-    const HTMLTEXT = `<div class="movements__row">
-    <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
-    <div class="movements__value">${mov}€</div>
-  </div>`;
+  movs.forEach(function (mov, i) {
+    const type = mov > 0 ? 'deposit' : 'withdrawal';
+    const now = new Date(acc.movementsDates[i]);
+    const day = `${now.getDate()}`.padStart(2, 0);
+    const month = `${now.getMonth()}`.padStart(2, 0);
+    const year = `${now.getFullYear()}`;
+    // const hour = `${now.getHours()}`.padStart(2, 0);
+    // const minutes = `${now.getMinutes()}`;
+    const displayDate = `${day}/${month}/${year}`;
 
-    containerMovements.insertAdjacentHTML(`afterbegin`, HTMLTEXT);
+    const html = `
+      <div class="movements__row">
+        <div class="movements__type movements__type--${type}">${
+      i + 1
+    } ${type}</div>
+    <div class="movements__date">${displayDate}</div>
+        <div class="movements__value">${mov.toFixed(2)}€</div>
+      </div>
+    `;
+
+    containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
 
-// Calculate Price Balance
-
-const calcPriceBalance = acc => {
-  const balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} EUR`;
-  acc.balance = balance;
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance.toFixed(2)}€`;
 };
 
-// Calculate Summary to the Account and display
-
-const calcDisplaySummary = acc => {
-  const depositBalance = acc.movements
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
     .filter(mov => mov > 0)
     .reduce((acc, mov) => acc + mov, 0);
-  // console.log(depositBalance);
-  labelSumIn.textContent = `${depositBalance}€`;
+  labelSumIn.textContent = `${incomes.toFixed(2)}€`;
 
-  const withdrawalAmt = acc.movements
+  const out = acc.movements
     .filter(mov => mov < 0)
     .reduce((acc, mov) => acc + mov, 0);
-  labelSumOut.textContent = `${Math.abs(withdrawalAmt)}€`;
+  labelSumOut.textContent = `${Math.abs(out.toFixed(2))}€`;
 
-  const intrestAmt = acc.movements
+  const interest = acc.movements
     .filter(mov => mov > 0)
-    .map(mov => (mov * acc.interestRate) / 100)
-    .reduce((acc, mov) => acc + mov, 0);
-  labelSumInterest.textContent = `${intrestAmt}€`;
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((int, i, arr) => {
+      // console.log(arr);
+      return int >= 1;
+    })
+    .reduce((acc, int) => acc + int, 0);
+  labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
 
-//  Create User Name
-
-const createUserNames = accounts => {
-  accounts.forEach(account => {
-    const userName = account.owner.toLowerCase().split(` `);
-    account.mainUser = userName.map(userId => userId[0]).join(``);
+const createUsernames = function (accs) {
+  accs.forEach(function (acc) {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
   });
-  return accounts;
 };
+createUsernames(accounts);
 
-// Update UI Functionality
-
-const updateUI = acc => {
+const updateUI = function (acc) {
   // Display movements
-  displayMovements(acc.movements);
-
-  // Display Summary
-  calcDisplaySummary(acc);
+  displayMovements(acc);
 
   // Display balance
-  calcPriceBalance(acc);
+  calcDisplayBalance(acc);
+
+  // Display summary
+  calcDisplaySummary(acc);
 };
 
-const userAccounts = createUserNames(accounts); // username: stw
-// console.log(userAccounts);
-
-// The filter Method
-
-// Implementing Login functionlity
-
-// Event Handlers....
+///////////////////////////////////////
+// Event handlers
 let currentAccount;
-btnLogin.addEventListener('click', e => {
+
+btnLogin.addEventListener('click', function (e) {
   // Prevent form from submitting
   e.preventDefault();
-  // console.log(`Logged In!!`);
+
   currentAccount = accounts.find(
-    acc => acc.mainUser === inputLoginUsername.value
+    acc => acc.username === inputLoginUsername.value
   );
-  // console.log(currentAccount);
-  if (currentAccount?.pin === Number(inputLoginPin.value)) {
-    // console.log(`Working!!`);
-    // Display UI and a welcome message
+  console.log(currentAccount);
 
-    labelWelcome.textContent = `Good Day, ${currentAccount.owner.slice(
-      0,
-      currentAccount.owner.indexOf(' ')
-    )}`;
+  if (currentAccount?.pin === +inputLoginPin.value) {
+    // Display UI and message
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 100;
 
-    // Display User Account Details
-    containerApp.style.opacity = '1';
-
-    // Clear Input Fields
-    inputLoginUsername.value = '';
-    inputLoginPin.value = '';
+    // Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
-    inputLoginPin.blur();
-
-    // Updating UI
-    updateUI(currentAccount);
-  }
-});
-
-// Transfer Money functionallity
-
-btnTransfer.addEventListener('click', e => {
-  e.preventDefault();
-  const amount = Number(inputTransferAmount.value);
-  const receiverAcc = accounts.find(
-    acc => acc.mainUser === inputTransferTo.value
-  );
-
-  inputTransferTo.value = ``;
-  inputTransferAmount.value = ``;
-
-  if (
-    amount > 0 &&
-    receiverAcc &&
-    currentAccount.balance >= amount &&
-    receiverAcc?.mainUser !== currentAccount.mainUser
-  ) {
-    // console.log(`You can transfer`);
-    // Doing the transfer
-    currentAccount.movements.push(-amount);
-    receiverAcc.movements.push(amount);
 
     // Update UI
     updateUI(currentAccount);
   }
 });
 
-// Implementing Loan functionality
-
-// Close Account Functionality
-
-btnLoan.addEventListener('click', e => {
+btnTransfer.addEventListener('click', function (e) {
   e.preventDefault();
-  console.log(`Your loan Application is in process`);
-  const loanGranted = currentAccount.movements.some(
-    mov => mov >= Number(inputLoanAmount.value) * 0.1
+  const amount = +inputTransferAmount.value;
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
   );
-  if (loanGranted && Number(inputLoanAmount.value) > 0) {
-    console.log(`Your loan Application has Approved!!`);
-    // Adding positive movement to the account
-    currentAccount.movements.push(Number(inputLoanAmount.value));
-    // Updating the UI
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    // Doing the transfer
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    // ADD TRANSFER DATE
+
+    currentAccount.movementsDates.push(new Date().toISOString());
+    receiverAcc.movementsDates.push(new Date().toISOString());
+
+    // Update UI
     updateUI(currentAccount);
   }
+});
 
-  // Clear the loan Application
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const amount = Math.floor(inputLoanAmount.value);
+
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    // Add movement
+    currentAccount.movements.push(amount);
+
+    // Add Loan Date
+    currentAccount.movementsDates.push(new Date().toISOString());
+
+    // Update UI
+    updateUI(currentAccount);
+  }
   inputLoanAmount.value = '';
 });
 
-btnClose.addEventListener('click', e => {
+btnClose.addEventListener('click', function (e) {
   e.preventDefault();
 
   if (
-    currentAccount.mainUser === inputCloseUsername.value &&
-    currentAccount.pin === Number(inputClosePin.value)
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
   ) {
-    //  Delete User Account
-    accounts.splice(
-      accounts.findIndex(acc => acc.mainUser === currentAccount.mainUser),
-      1
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username
     );
+    console.log(index);
+    // .indexOf(23)
+
+    // Delete account
+    accounts.splice(index, 1);
 
     // Hide UI
     containerApp.style.opacity = 0;
   }
 
-  // Clear the field
-  inputCloseUsername.value = '';
-  inputClosePin.value = '';
-  console.log(accounts);
+  inputCloseUsername.value = inputClosePin.value = '';
 });
 
-// Sort functionality
 let sorted = false;
-btnSort.addEventListener(`click`, e => {
+btnSort.addEventListener('click', function (e) {
   e.preventDefault();
-  console.log('sorting!!');
-  displayMovements(currentAccount.movements, !sorted);
+  displayMovements(currentAccount, !sorted);
   sorted = !sorted;
 });
 
@@ -259,468 +276,80 @@ btnSort.addEventListener(`click`, e => {
 /////////////////////////////////////////////////
 // LECTURES
 
-// const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+// Converting and Checking Numbers
 
-// const currencies = new Map([
-//   ['USD', 'United States dollar'],
-//   ['EUR', 'Euro'],
-//   ['GBP', 'Pound sterling'],
-// ]);
+// All numbers are represented as floating point numbers Internally
 
-/////////////////////////////////////////////////
+// console.log(23 === 23.0);
+// console.log(0.1 + 0.2);
 
-// Slice Method:- this method don't mutate the original array
+// console.log(Number(`78`));
+// console.log(+`23`);
 
-let arr = [`a`, `b`, `c`, `d`, `e`];
-// console.log(arr.slice(0, 3));
-// console.log(arr.slice(2, 4));
-// console.log(arr.slice(1, -2));
+// console.log(Number.parseInt(`78px`, 10));
+// console.log(Number.parseFloat(`78.89px`, 10));
 
-// slice method to create a shallow copy of an array
-// console.log(arr.slice());
+// console.log(Number.isNaN(`20`));
+// console.log(Number.isNaN(20));
 
-// Splice Method:-
+// Number.isFinite() is a best way to check if a number is NaN or not
 
-// the diff. b/w slice and splice method is that it mutates the original array
+// console.log(Number.isFinite(+`20x`));
 
-// splice method is used to remove elements.
+// Math rounding function
 
-// console.log(arr.splice(2));
-// arr.splice(-1);
-// arr.splice(3, 2);
-// console.log(arr);
+// Math sqrt()
+// console.log(Math.sqrt(5));
 
-// Reverse Method
-// this method does mutate the array
+// Math max() and min()
+// console.log(Math.max(5, 18, 23, 11, 2));
+// console.log(Math.min(5, 18, 23, 11, 2));
 
-let arr2 = [`a`, `b`, `c`, `d`, `e`];
-const arr3 = [`J`, `i`, `h`, `g`, `f`];
-// console.log(arr3.reverse());
-// console.log(arr3);
+// console.log(Math.PI * Number.parseFloat(`10px`) ** 2);
 
-// concat
+// Generating a random number b/w max and min values
 
-const letters = arr2.concat(arr3);
-// console.log(letters);
+// const randomNumber = (min, max) =>
+// Math.floor(Math.random() * (max - min) + 1) + min;
 
-// Join Method
-// console.log(letters.join(`-`));
+// console.log(randomNumber(10, 20));
 
-// Looping Array: Using forEach() method
+// Primitive Type:- BigInt
 
-// const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+// console.log(Number.MAX_SAFE_INTEGER);
+// console.log(2 ** 53 + 8505);
 
-// looping over using for of loop
+// BigInt
+// console.log(98996587421688888785531354564886684n);
 
-// for (const movement of movements) {
-//   if (movement > 0) {
-//     console.log(`${movement}$ are deposited!!`);
-//   } else {
-//     console.log(`${Math.abs(movement)}$ are withdrawn`);
-//   }
-// }
+// Working With Date
 
-// looping over using forEach loop
+// const now = new Date();
+// console.log(now);
+// console.log(new Date(`Sun Feb 19 2023 18:04:15`));
+// console.log(new Date(`20 May 2022`));
+// console.log(new Date(account1.movementsDates[0]));
+// console.log(new Date(2015, 4, 31, 15, 19, 61));
 
-// one thing to mind,you can not use continue and break keywords on forEach loop
+// we can also pass the unix contructor the amount of miliseconds has passed since,the beginning of unix time
+// console.log(new Date(0));
+// console.log(new Date(3 * 24 * 60 * 60 * 1000));
+// console.log(new Date(365 * 11 * 24 * 60 * 60 * 1000));
 
-// movements.forEach((movement, index, array) => {
-//   if (movement > 0) {
-//     console.log(`${movement}$ are deposited!!`);
-//   } else {
-//     console.log(`${Math.abs(movement)}$ are withdrawn`);
-//   }
-// });
-
-// forEach on Maps and Sets
-
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
-
-// console.log(`Maps`);
-// currencies.forEach((currency, initials, map) => {
-//   console.log(currency, initials, map);
-// });
-
-console.log(`*******************************`);
-// console.log(`Sets`);
-
-const uniqueCurrencies = new Set(['USD', 'GBP', 'USD', 'EUR', 'EUR']);
-
-// console.log(uniqueCurrencies);
-
-// Remember: Sets has not any order
-// uniqueCurrencies.forEach((currency, index, set) => {
-//   console.log(`Currency${index}: ${currency} ,${set}`);
-// });
-
-// Coding Challenge# 1:-
-
-// Test data:
-// § Data 1: Julia's data [3, 5, 2, 12, 7], Kate's data [4, 1, 15, 8, 3]
-// § Data 2: Julia's data [9, 16, 6, 8, 3], Kate's data [10, 5, 6, 1, 4]
-
-const checkDogs = (arr1, arr2) => {
-  const dogs1 = [...arr1];
-  const dogs2 = [...arr2];
-  // console.log(dogs1);
-  dogs1.shift();
-  dogs1.pop();
-  dogs1.pop();
-
-  const allDogs = [...dogs1, ...dogs2];
-  allDogs.forEach((age, num) => {
-    if (age >= 3) {
-      console.log(`Dog number ${num + 1} is an adult, and is ${age} years old`);
-    } else {
-      console.log(`Dog number ${num + 1} is an puppy, and is ${age} years old`);
-    }
-  });
-};
-
-// checkDogs([3, 5, 2, 12, 7], [4, 1, 15, 8, 3]);
-// checkDogs([9, 16, 6, 8, 3], [10, 5, 6, 1, 4]);
-
-// Coding Challenge: #2:-
-// Test data:
-// § Data 1: [5, 2, 4, 1, 15, 8, 3]
-// § Data 2: [16, 6, 10, 5, 6, 1, 4]
-
-const calcAverageHumanAge = arr => {
-  const dogsAge = [...arr];
-
-  const humanAge = dogsAge.map(age => (age <= 2 ? 2 * age : 16 + age * 4));
-
-  const adultHumanAge = humanAge.filter(age => age >= 18);
-
-  const avergaeAdultHumanAge =
-    adultHumanAge.reduce((acc, age) => acc + age, 0) / adultHumanAge.length;
-
-  return `Adult Human Age for Adult dog: ${avergaeAdultHumanAge}`;
-};
-
-const adultAge1 = calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
-const adultAge2 = calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
-// console.log(adultAge1);
-// console.log(adultAge2);
-
-// Coding Challenge #3:-
-
-// Test data:
-// § Data 1: [5, 2, 4, 1, 15, 8, 3]
-// § Data 2: [16, 6, 10, 5, 6, 1, 4]
-
-const calcAverageHumanAge1 = ages => {
-  const avergaeAdultHumanAgeOfDog = ages
-    .map(age => (age <= 2 ? age * 2 : age * 4 + 16))
-    .filter(age => age >= 18)
-    .reduce((acc, age, i, adultArr) => acc + age / adultArr.length, 0);
-  return avergaeAdultHumanAgeOfDog;
-};
-
-// console.log(
-//   `Average Human age of a adult dog: ${calcAverageHumanAge1([
-//     5, 2, 4, 1, 15, 8, 3,
-//   ])}`
-// );
-// Data Transformations:- map,filter and reuce method in Array
-
-// Map method:- map returns a new Array containing the reults of applying an operation on all original array elements
-
-// filter method:- filter returns a new Array containing the array elements, that passed a specified test
-
-// reduce method:- reduce boils all array elements down to one single value(eg:- adding all elemets together)
-
-// map method:-
-
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
-
-const euroToUsd = 1.1;
-
-const movementsUsd = movements.map(mov => mov * euroToUsd);
-
-// console.log(movements);
-// console.log(movementsUsd);
-
-const movementsDescription = movements.map((mov, index, arr) => {
-  if (mov > 0) {
-    return `Movement ${index + 1}: ${mov} $ deposit to your account `;
-  } else {
-    return `Movement ${index + 1}: ${mov} $ withdrawn to your account `;
-  }
-});
-
-// console.log(movementsDescription);
-// console.log(movements);
-
-// The Filter Method
-
-// Array of deposits
-const deposits = movements.filter(mov => mov > 0);
-// console.log(deposits);
-
-const withdrawals = movements.filter(mov => mov < 0);
-// console.log(withdrawals);
-
-// The Reduce Method
-
-// accumltor-> like a Snowball
-const balance = movements.reduce((acc, mov) => {
-  return acc + mov;
-}, 0);
-// console.log(balance);
-
-// Max Value
-
-// const maxValue = movements.reduce((max, mov) => {
-//   if (mov > max) {
-//     return mov;
-//   } else {
-//     return max;
-//   }
-// }, movements[0]);
-
-// Generating Max value using reduce method
-const maxValue = movements.reduce(
-  (acc, mov) => (acc > mov ? acc : mov),
-  movements[0]
-);
-
-// console.log(maxValue);
-
-// The Magic of chaining Methods
-
-// It's like an Pipeline
-const depositAccountBalance = movements
-  .filter(mov => mov > 0)
-  .map(mov => mov * euroToUsd)
-  .reduce((acc, move) => acc + move, 0);
-
-// console.log(depositAccountBalance);
-
-// find method in JavaScript
-
-// we can use find method on an arraay to retrieve a single element based on a certain condition
-
-const firstWithdrawal = Math.abs(movements.find(mov => mov < 0));
-// console.log(movements);
-// console.log(`First Withdrawal: ${firstWithdrawal}`);
-
-// console.log(accounts);
-
-const account = accounts.find(acc => acc.owner === 'Jessica Davis');
-
-// Now Using for-of loop
-// console.log(Object.entries(account));
-// console.log(`Jessica's Account details: ${Object.entries(account)}`);
-// console.log(account);
-
-// const accountObjects = Object.values(accounts);
-// // console.log(accountObjects);
-
-// let jessicaAccount;
-// for (const account of accountObjects) {
-//   if (account.owner === 'Jessica Davis') {
-//     console.log(`This is the account, I was looking for!!`);
-//     jessicaAccount = account;
-//     break;
-//   }
-//   continue;
-// }
-
-// console.log(jessicaAccount);
-
-// console.log(movements);
-// console.log(movements.includes(-130));
-
-// some and every method on Arrays
-
-const positiveMovement = movements.some(mov => mov > 5000);
-// console.log(positiveMovement);
-
-// Every Method: condition
-const allPositiveMovement = movements.every(mov => mov > 5000);
-// console.log(allPositiveMovement);
-
-// flat and flatMap array Methods
-
-const array = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], 13, 14];
-
-// console.log(array.flat());
-
-const arrayDeep = [[[1, 2], 3], [[4, [5, 6]]], [[[7, 8, 9], 10]]];
-
-// console.log(arrayDeep.flat(3));
-
-const accountMovements = accounts.map(acc => acc.movements);
-const allMovements = accountMovements.flat();
-// console.log(allMovements);
-
-const completeBalance = allMovements.reduce((ace, move) => ace + move, 0);
-// console.log(completeBalance);
-
-// Sorting
-
-const owners = ['Jonas', 'Zack', 'Adam', 'Martha'];
-// console.log(owners.sort());
-// console.log(owners);
-
-// Numbers
-// console.log(movements);
-// console.log(movements.sort());
-
-// num1 and num are consective numbers
-// return<0 => A,B(keep order)
-// return>0 => B,A(switch order)
-
-// Ascending Order
-// movements.sort((num1, num2) => {
-//   if (num1 > num2) {
-//     return 1;
-//   }
-//   if (num2 > num1) {
-//     return -1;
-//   }
-// });
-
-// console.log(movements);
-
-// Descending Order
-// movements.sort((num1, num2) => {
-//   if (num1 > num2) {
-//     return -1;
-//   }
-//   if (num2 > num1) {
-//     return 1;
-//   }
-// });
-
-// console.log(movements);
-
-// we can make this more simpllify
-
-// console.log(movements);
-const sortedArray = movements.sort((num1, num2) => num1 - num2);
-// console.log(sortedArray);
-
-// More ways of creating and filling Array
-// generating Arrays programmatically
-
-const x = new Array(7);
-
-// Empty arrays + fill method
-// x.fill(5);
-x.fill(9, 3, 6);
-// console.log(x);
-
-const arr1 = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-arr1.fill(39, 2, 5);
-// console.log(arr1);
-
-// Array.from
-// here this from is not using as method instead using as constructor function
-const y = Array.from({ length: 7 }, () => 1);
-// console.log(y);
-
-const z = Array.from({ length: 7 }, (_, i) => i + 1);
-// console.log(z);
-
-const randomDiceRolls = Array.from({ length: 100 }, (_, i) =>
-  Math.floor(Math.random() * 101)
-);
-// console.log(randomDiceRolls);
-
-// labelBalance.addEventListener('click', e => {
-//   const movementsUI = Array.from(
-//     document.querySelectorAll(`.movements__value`)
-//   );
-//   console.log(movementsUI);
-//   const movementsValue = movementsUI.map(el => el.textContent.replace(`€`, ``));
-//   console.log(movementsValue);
-// });
-
-// Coding Challenge #4:-
-
-const dogs = [
-  { weight: 22, curFood: 250, owners: ['Alice', 'Bob'] },
-  { weight: 8, curFood: 200, owners: ['Matilda'] },
-  { weight: 13, curFood: 275, owners: ['Sarah', 'John'] },
-  { weight: 32, curFood: 340, owners: ['Michael'] },
-];
-
-// Task #1:-
-dogs.forEach(
-  dog => (dog.recommendPortion = Math.floor(dog.weight ** 0.75 * 28))
-);
-
-// console.log(dogs);
-
-// Task #2:-
-
-const sarahDog = dogs.find(dog => dog.owners.includes(`Sarah`));
-// console.log(sarahDog);
-// console.log(
-//   `Sarah's dog is ${
-//     sarahDog.recommendPortion < sarahDog.curFood
-//       ? `eating too much!!`
-//       : `Not eating too much!!`
-//   }`
-// );
-
-// Task #3:-
-
-// console.log(
-//   Object.entries({ weight: 22, curFood: 250, owners: ['Alice', 'Bob'] })
-// );
-// console.log(dogs);
-const ownersEatTooMuch = dogs
-  .filter(dog => dog.recommendPortion < dog.curFood)
-  .map(dog => dog.owners)
-  .flat();
-
-const ownersEatTooLess = dogs
-  .filter(dog => dog.recommendPortion > dog.curFood)
-  .map(dog => dog.owners)
-  .flat();
-
-// console.log(ownersEatTooMuch);
-// console.log(ownersEatTooLess);
-
-// Task #4:-
-// console.log(
-//   `${ownersEatTooMuch[0]},${ownersEatTooMuch[1]},and ${ownersEatTooMuch[2]}'s dog eat too much`
-// );
-// console.log(
-//   `${ownersEatTooLess[0]},${ownersEatTooLess[1]},and ${ownersEatTooLess[2]}'s dog eat too Less`
-// );
-
-// Task #5:-
-// console.log(dogs.some(dog => dog.recommendPortion === dog.curFood));
-
-// // Task #6:-
-// console.log(
-//   dogs.some(
-//     dog =>
-//       dog.curFood > dog.recommendPortion * 0.9 &&
-//       dog.curFood < dog.recommendPortion * 1.1
-//   )
-// );
-
-// Task #7:-
-
-const okayFoodDogs = dogs.filter(
-  dog =>
-    dog.curFood > dog.recommendPortion * 0.9 &&
-    dog.curFood < dog.recommendPortion * 1.1
-);
-
-// console.log(okayFoodDogs);
-
-// Task #8:-
-const recommendFoodDogs = dogs
-  .slice()
-  .sort((a, b) => a.recommendPortion - b.recommendPortion);
-// console.log(recommendFoodDogs);
+// These dates which we are created are some special type of Objects.
+// console.log(`*************** Future *********************`);
+const future = new Date(2037, 10, 19, 15, 23);
+// console.log(future);
+// console.log(future.getFullYear());
+// console.log(future.getMonth());
+// console.log(future.getDate());
+// console.log(future.getDay());
+// console.log(future.getHours());
+// console.log(future.getMinutes());
+// console.log(future.getSeconds());
+// console.log(future.toISOString());
+// console.log(future.getTime());
+// console.log(new Date(2142237180000));
+// console.log(Date.now());
+// future.setFullYear(2050);
+// console.log(future);
