@@ -206,9 +206,36 @@ const updateUI = function (acc) {
   calcDisplaySummary(acc);
 };
 
+// Creating a logout timer function
+
+const startLogOut = () => {
+  const tick = () => {
+    let min = `${Math.trunc(timeRemaining / 60)}`.padStart(2, 0);
+    let seconds = `${Math.trunc(timeRemaining % 60)}`.padStart(2, 0);
+    // 3.On each call print the remaining time to the UI
+    labelTimer.textContent = `${min}:${seconds}`;
+
+    // 4. when we reach 0 seconds, stop timer and logout
+    if (timeRemaining === 0) {
+      clearInterval(logOutTimer);
+      labelWelcome.textContent = `Log in to get started`;
+      containerApp.style.opacity = 0;
+    }
+
+    // Decrese 1 s
+    timeRemaining--;
+  };
+  // 1. setting the time to 5 mins
+  let timeRemaining = 300;
+  // 2. call the timer every second
+  tick();
+  const logOutTimer = setInterval(tick, 1000);
+  return logOutTimer;
+};
+
 ///////////////////////////////////////
 // Event handlers
-let currentAccount;
+let currentAccount, timer;
 
 btnLogin.addEventListener('click', function (e) {
   // Prevent form from submitting
@@ -247,6 +274,11 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
 
+    // Start Logging Out
+    // console.log(timer);
+    if (timer) clearInterval(timer);
+    timer = startLogOut();
+
     // Update UI
     updateUI(currentAccount);
   }
@@ -277,6 +309,12 @@ btnTransfer.addEventListener('click', function (e) {
 
     // Update UI
     updateUI(currentAccount);
+
+    // Resetting the timer
+    if (timer) {
+      clearInterval(timer);
+    }
+    timer = startLogOut();
   }
 });
 
@@ -286,15 +324,27 @@ btnLoan.addEventListener('click', function (e) {
   const amount = Math.floor(inputLoanAmount.value);
 
   if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
-    // Add movement
-    currentAccount.movements.push(amount);
+    alert(
+      `Your loan application is under request.click okay to further processing`
+    );
+    const bankApplication = setTimeout(() => {
+      // Add movement
+      alert(`Your loan application has approved!!, Congrats`);
+      currentAccount.movements.push(amount);
 
-    // Add Loan Date
-    currentAccount.movementsDates.push(new Date().toISOString());
+      // Add Loan Date
+      currentAccount.movementsDates.push(new Date().toISOString());
 
-    // Update UI
-    updateUI(currentAccount);
+      // Update UI
+      updateUI(currentAccount);
+      if (timer) {
+        clearInterval(timer);
+      }
+      timer = startLogOut();
+    }, 3000);
   }
+  // Resetting the timer
+
   inputLoanAmount.value = '';
 });
 
@@ -315,6 +365,7 @@ btnClose.addEventListener('click', function (e) {
     accounts.splice(index, 1);
 
     // Hide UI
+    labelWelcome.textContent = `Log in to get started`;
     containerApp.style.opacity = 0;
   }
 
@@ -427,19 +478,50 @@ const day1 = numberOfDaysPassed(new Date(2037, 3, 14), new Date(2037, 3, 4));
 // Exprementing With Interaliztion API
 // Exprementing with numbers
 
-const number = 3888476.985;
-const options = {
-  style: `currency`,
-  unit: `mile-per-hour`,
-  currency: `INR`,
-  // useGrouping: false,
-};
-console.log(
-  `USA:   ${new Intl.NumberFormat(`en-US`, options).format(number)} `
-);
-console.log(
-  `Germany:  ${new Intl.NumberFormat(`de-DE`, options).format(number)} `
-);
-console.log(
-  `Syria:  ${new Intl.NumberFormat(`ar-SY`, options).format(number)} `
-);
+// const number = 3888476.985;
+// const options = {
+//   style: `currency`,
+//   unit: `mile-per-hour`,
+//   currency: `INR`,
+//   // useGrouping: false,
+// };
+// console.log(
+//   `USA:   ${new Intl.NumberFormat(`en-US`, options).format(number)} `
+// );
+// console.log(
+//   `Germany:  ${new Intl.NumberFormat(`de-DE`, options).format(number)} `
+// );
+// console.log(
+//   `Syria:  ${new Intl.NumberFormat(`ar-SY`, options).format(number)} `
+// );
+
+// Praticing,Timers,setTimeOut() and setIntervl()
+
+// setTimeOut() runs only one time after the function is called wheres setInterval() keeps running untill e stop it
+
+// so we can use setTimeout() to execute a particular code in the future
+
+// Ordering Pizza
+// const ingredients = [`Tomato`, `Masroom`];
+// console.log(`Your Order will arive in some time!!`);
+// const pizzaTimer = setTimeout(
+//   (ing1, ing2) => console.log(`Here,is your pizza with ${ing1} & ${ing2}`),
+//   3000,
+//   ...ingredients
+// );
+// console.log(`Waiting!!`);
+
+// // we can clearTimer function as well
+// if (ingredients.includes(`Tomato`)) {
+//   clearTimeout(pizzaTimer);
+// }
+
+// setInterval():- it will call itself after a regular Interva
+
+// setInterval(() => {
+//   const newDate = new Date();
+//   const hours = `${newDate.getHours()}`.padStart(2, 0);
+//   const minutes = `${newDate.getMinutes()}`.padStart(2, 0);
+//   const seconds = `${newDate.getSeconds()}`.padStart(2, 0);
+//   console.log(`${hours}:${minutes}:${seconds}`);
+// }, 1000);
